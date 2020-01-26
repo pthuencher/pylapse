@@ -1,0 +1,7 @@
+# python specific
+*.pyc
+
+# project specific
+*.avi
+*.mp4
+*.mkv
