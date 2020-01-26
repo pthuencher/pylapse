@@ -7,6 +7,7 @@ import os
 # 3rd pary imports
 import cv2
 import numpy as np
+from colorama import init as colorama_init, Fore, Back, Style
 
 # Defaults
 DEFAULT_FPS = 24
@@ -20,20 +21,18 @@ PREVIEW = False
 
 # Logging macros
 def ERROR(msg, shutdown=False):
-    print('ERROR: %s' % msg)
+    print('[' + Fore.RED + 'ERROR' + Style.RESET_ALL + '] ' + str(msg))
     if shutdown:
         sys.exit(1)
 
 def DEBUG(msg):
     global VERBOSE
     if VERBOSE:
-        print('DEBUG: %s' % msg)
+        print('[DEBUG] ' + str(msg))
 
 def INFO(msg, color=None, overwrite=False):
-    if overwrite:
-        print(msg, end='\r')
-    else:
-        print(msg)
+    end = '\r' if overwrite else '\n'
+    print('[' + Fore.YELLOW + 'timelapse' + Style.RESET_ALL + '] ' + str(msg), end=end)
 
 def parse_dimension(dim):
     if not dim:
@@ -46,11 +45,13 @@ def parse_dimension(dim):
     return (int(d[0]), int(d[1]))
 
 def create_progress_bar(perc):
-    return '#'*perc + '-'*(100-perc)
+    return '\x1b[1;32m#\x1b[1;0m'*perc + '-'*(100-perc)
 
 
 # Setup routine
 def setup():
+    colorama_init()
+
     # Setup ArgumentParser
     parser = argparse.ArgumentParser(description='Create timelapse video from image sources.')
 
@@ -72,7 +73,7 @@ def setup():
     global VERBOSE
     VERBOSE = args.verbose
     global PREVIEW
-    PREVIEW = args.preview or True # FIXME: 'or True' only for development
+    PREVIEW = args.preview
     
     # Apply argument defauls
     args.dimension = parse_dimension(args.dimension)
@@ -90,25 +91,27 @@ def setup():
     args.fps = int(args.fps)
     DEBUG(args)
 
-    # Check preconditions
-    #  1.) Output file existence
-    args.outputpath = args.output if os.path.isabs(args.output) else os.path.join(args.basepath, args.output)
-    if os.path.exists(args.outputpath):
-        if args.force_overwrite:
-            INFO('Force overwriting existing file "%s"' % args.outputpath)
-        else:
-            choice = input('File "%s" already exists. Overwrite? (y/N): ' % args.outputpath)
-            if choice != 'y':
-                ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
-    
-    #  2.) Source folder existence
+    # Check preconditions    
+    #  1.) Source folder existence
     args.sourcepath = args.source if os.path.isabs(args.source) else os.path.join(args.basepath, args.source)
     if not os.path.isdir(args.sourcepath):
         ERROR('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath, shutdown=True)
 
-    #  3.) Source folder content
+    #  2.) Source folder content
     if not os.listdir(args.sourcepath):
         ERROR('Directory "%s" does not contain any image file.' % args.sourcepath, shutdown=True)
+
+    #  3.) Output file existence (if not preview)
+    if (args.preview): return args
+
+    args.outputpath = args.output if os.path.isabs(args.output) else os.path.join(args.basepath, args.output)
+    if os.path.exists(args.outputpath):
+        if args.force_overwrite:
+            INFO('Overwriting existing file "%s"' % args.outputpath)
+        else:
+            choice = input('File "%s" already exists. Overwrite? (y/N): ' % args.outputpath)
+            if choice != 'y':
+                ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
 
     return args
 
@@ -122,12 +125,13 @@ if __name__ == '__main__':
     if nfiles < 1:
         ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
 
-    INFO('Collected in total %d images from the source directory' % nfiles)
-    INFO('Start timelapse creation. Target dimension is %dx%d' % (args.dimension[0], args.dimension[1]))
+    INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
+    INFO('Target dimension: %dx%d' % (args.dimension[0], args.dimension[1]))
 
     # Create VideoWriter
     try:
-        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'DIVX'), args.fps, args.dimension)
+        if not PREVIEW: 
+            out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'DIVX'), args.fps, args.dimension)
 
         # Iterate over each image and write to video
         for i, path in enumerate(files):
@@ -139,6 +143,11 @@ if __name__ == '__main__':
             resize_img = cv2.resize(img, args.dimension, interpolation = cv2.INTER_LINEAR)
             resize_width, resize_height, _ = resize_img.shape
 
+            if PREVIEW:
+                cv2.imshow('preview', resize_img)
+                cv2.waitKey(0)
+                break
+
             img_data = dict()
             img_data['index'] = i
             img_data['total'] = nfiles
@@ -148,19 +157,20 @@ if __name__ == '__main__':
             img_data['resize_width'] = resize_width
             img_data['resize_height'] = resize_height
             img_data['progress_bar'] = create_progress_bar(int(img_data['percentage']))
-            INFO('  [ {percentage}% ] | [ {progress_bar} ] | [ {index} of {total} ]'.format(**img_data), overwrite=True)
+            INFO('[ \x1b[1;32m{percentage}%\x1b[1;0m ] | [ {progress_bar} ] | [ {index} of {total} ]'.format(**img_data), overwrite=True)
 
             # write image
-            out.write(resize_img)
+            if not PREVIEW:
+                out.write(resize_img)
         
         INFO('Processing.. Done')
-        INFO('Output file: "%s"' % args.output)
+        if not args.preview: INFO('Output file: "%s"' % args.output)
 
     except BaseException as e:
+        print('\n\n')
         raise e
     finally:
-        out.release()
-        INFO('\n\nABORTED')
-        INFO('Output file: "%s"' % args.output)
+        if not PREVIEW: 
+            out.release()
 
         
