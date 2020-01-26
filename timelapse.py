@@ -7,45 +7,13 @@ import os
 # 3rd pary imports
 import cv2
 import numpy as np
-from colorama import init as colorama_init, Fore, Back, Style
+from colorama import init as colorama_init
 
-# Defaults
-DEFAULT_FPS = 24
-DEFAULT_OUTPUT_SIZE = (1920, 1080) # full HD
-DEFAULT_OUTPUT_EXT = 'avi'
-DEFAULT_OUTPUT_FILENAME = 'out'
+# local imports
+from constants import *
+import helpers
+from helpers import *
 
-# Globals
-VERBOSE = False
-PREVIEW = False
-
-# Logging macros
-def ERROR(msg, shutdown=False):
-    print('[' + Fore.RED + 'ERROR' + Style.RESET_ALL + '] ' + str(msg))
-    if shutdown:
-        sys.exit(1)
-
-def DEBUG(msg):
-    global VERBOSE
-    if VERBOSE:
-        print('[DEBUG] ' + str(msg))
-
-def INFO(msg, color=None, overwrite=False):
-    end = '\r' if overwrite else '\n'
-    print('[' + Fore.YELLOW + 'timelapse' + Style.RESET_ALL + '] ' + str(msg), end=end)
-
-def parse_dimension(dim):
-    if not dim:
-        return DEFAULT_OUTPUT_SIZE
-    
-    d = dim.split('x')
-    if len(d) != 2:
-        ERROR('Failed to parse dimension "%s". Use e.g. 720x480' % dim, shutdown=True)
-
-    return (int(d[0]), int(d[1]))
-
-def create_progress_bar(perc):
-    return '\x1b[1;32m#\x1b[1;0m'*perc + '-'*(100-perc)
 
 
 # Setup routine
@@ -70,10 +38,7 @@ def setup():
     args.basepath = os.getcwd()
 
     # Set verbosity status
-    global VERBOSE
-    VERBOSE = args.verbose
-    global PREVIEW
-    PREVIEW = args.preview
+    helpers.VERBOSE = args.verbose
     
     # Apply argument defauls
     args.dimension = parse_dimension(args.dimension)
@@ -113,11 +78,43 @@ def setup():
             if choice != 'y':
                 ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
 
+    DEBUG('Setup completed.')
     return args
 
-# Entry point
-if __name__ == '__main__':
-    args = setup()
+# Calculate preview image and show
+def do_preview(args):
+    
+    # Collect all images from source path
+    files = glob.glob(os.path.join(args.sourcepath, '*'))
+    nfiles = len(files)
+    if nfiles < 1:
+        ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
+    INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
+
+    # Read preview image
+    preview_path = files[int(len(files)/2)] # take from the middle
+    preview_img = cv2.imread(preview_path)
+    height, width, _ = preview_img.shape
+
+    INFO('Original dimension: %dx%d' % (width, height))
+
+    while height > 800 and width > 800:
+        height /=2; height = int(height)
+        width /= 2; width = int(width)
+
+    INFO('Preview dimension: %dx%d' % (width, height))
+
+    # resize image
+    preview_img = cv2.resize(preview_img, (width, height), interpolation = cv2.INTER_LINEAR)
+
+    # display preview image
+    cv2.imshow('preview', preview_img)
+    cv2.waitKey(0)
+
+    return True
+
+# Render full timelapse video
+def do_render(args):
 
     # Collect all images from source path
     files = glob.glob(os.path.join(args.sourcepath, '*'))
@@ -130,8 +127,7 @@ if __name__ == '__main__':
 
     # Create VideoWriter
     try:
-        if not PREVIEW: 
-            out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'DIVX'), args.fps, args.dimension)
+        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'DIVX'), args.fps, args.dimension)
 
         # Iterate over each image and write to video
         for i, path in enumerate(files):
@@ -142,11 +138,6 @@ if __name__ == '__main__':
             # resize image
             resize_img = cv2.resize(img, args.dimension, interpolation = cv2.INTER_LINEAR)
             resize_width, resize_height, _ = resize_img.shape
-
-            if PREVIEW:
-                cv2.imshow('preview', resize_img)
-                cv2.waitKey(0)
-                break
 
             img_data = dict()
             img_data['index'] = i
@@ -160,17 +151,46 @@ if __name__ == '__main__':
             INFO('[ \x1b[1;32m{percentage}%\x1b[1;0m ] | [ {progress_bar} ] | [ {index} of {total} ]'.format(**img_data), overwrite=True)
 
             # write image
-            if not PREVIEW:
-                out.write(resize_img)
+            out.write(resize_img)
         
-        INFO('Processing.. Done')
-        if not args.preview: INFO('Output file: "%s"' % args.output)
+        INFO('Output file: "%s"' % args.output)
 
+    except KeyboardInterrupt:
+        print('\n') # avoid \r issues
+        INFO('Aborted by user')
+        return True
     except BaseException as e:
         print('\n\n')
-        raise e
+        return e
     finally:
-        if not PREVIEW: 
-            out.release()
+        out.release()
+    
+    return True
+
+# Entry point
+if __name__ == '__main__':
+    args = setup()
+
+    action = None
+    if args.preview:
+        action = do_preview
+    else:
+        # default action
+        action = do_render
+
+    # call action
+    rc = action(args)
+
+    # check return code
+    if isinstance(rc, BaseException):
+        ERROR('Exception occured')
+        raise rc
+    else:
+        INFO('Exit.')
+        sys.exit(0)
+
+    
+
+    
 
         
