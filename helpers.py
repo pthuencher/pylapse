@@ -1,5 +1,11 @@
+# standard imports
+import sys
+
 # 3rd pary imports
 from colorama import Fore, Back, Style
+
+# local imports
+from constants import DEFAULT_DIMENSION
 
 # Globals
 VERBOSE = False
@@ -20,7 +26,7 @@ def INFO(msg, color=None, overwrite=False):
 
 def parse_dimension(dim):
     if not dim:
-        return None
+        return DEFAULT_DIMENSION
     
     d = dim.split('x')
     if len(d) != 2:

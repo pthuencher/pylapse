@@ -29,7 +29,8 @@ def setup():
     parser.add_argument('-v', '--verbose', action='store_true',help='Display verbose debug output.')
     parser.add_argument('-p', '--preview', action='store_true',help='Preview (do not write any file).')
     parser.add_argument('-d', '--dimension', help='Dimension of the output video file. (default=1920x1080)')
-    parser.add_argument('--ext', help='Format of the output video file. (default=%s)' % DEFAULT_OUTPUT_EXT)
+    parser.add_argument('-c', '--fourcc', help='FOURCC code of the output video file. (default=%s)' % DEFAULT_FOURCC)
+    parser.add_argument('-e', '--ext', help='Extension of the output video file. (default=%s)' % DEFAULT_EXTENSION)
     parser.add_argument('--fps', help='Frames per second. (default=%d)' % DEFAULT_FPS)
 
     args = parser.parse_args()
@@ -44,7 +45,9 @@ def setup():
     args.dimension = parse_dimension(args.dimension)
 
     if not args.ext:
-        args.ext = DEFAULT_OUTPUT_EXT
+        args.ext = DEFAULT_EXTENSION
+    if not args.fourcc:
+        args.fourcc = DEFAULT_FOURCC
     if not args.fps:
         args.fps = DEFAULT_FPS
     if not args.output:
@@ -123,35 +126,41 @@ def do_render(args):
         ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
 
     INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
-    INFO('Target dimension: %dx%d' % (args.dimension[0], args.dimension[1]))
+    INFO('Crop images to %dx%d' % args.dimension)
+
+    # Read preview image
+    preview_path = files[int(len(files)/2)] # take from the middle
+    preview_img = cv2.imread(preview_path)
+    height, width, _ = preview_img.shape
 
     # Create VideoWriter
     try:
-        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*'DIVX'), args.fps, args.dimension)
+        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*args.fourcc), args.fps, (args.dimension[0], args.dimension[1]))
+        INFO('Creating output file "%s" FOURCC=%s' % (args.output, args.fourcc))
 
         # Iterate over each image and write to video
         for i, path in enumerate(files):
 
-            img = cv2.imread(path)
-            width, height, _ = img.shape
+            # read image
+            orig_img = cv2.imread(path)
+            orig_width, orig_height, _ = orig_img.shape
+
+            # TODO: calculate resize factor to avoid image stetch
 
             # resize image
-            resize_img = cv2.resize(img, args.dimension, interpolation = cv2.INTER_LINEAR)
+            resize_img = cv2.resize(orig_img, (args.dimension[0], args.dimension[1]), interpolation = cv2.INTER_LINEAR)
             resize_width, resize_height, _ = resize_img.shape
 
+            # write image
+            out.write(resize_img)
+
+            # Display progress
             img_data = dict()
             img_data['index'] = i
             img_data['total'] = nfiles
             img_data['percentage'] = round((i / nfiles)*100, 1)
-            img_data['width'] = width
-            img_data['height'] = height
-            img_data['resize_width'] = resize_width
-            img_data['resize_height'] = resize_height
             img_data['progress_bar'] = create_progress_bar(int(img_data['percentage']))
             INFO('[ \x1b[1;32m{percentage}%\x1b[1;0m ] | [ {progress_bar} ] | [ {index} of {total} ]'.format(**img_data), overwrite=True)
-
-            # write image
-            out.write(resize_img)
         
         INFO('Output file: "%s"' % args.output)
 
@@ -164,7 +173,7 @@ def do_render(args):
         return e
     finally:
         out.release()
-    
+
     return True
 
 # Entry point
