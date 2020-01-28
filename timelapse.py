@@ -32,6 +32,7 @@ def setup():
     parser.add_argument('-c', '--fourcc', help='FOURCC code of the output video file. (default=%s)' % DEFAULT_FOURCC)
     parser.add_argument('-e', '--ext', help='Extension of the output video file. (default=%s)' % DEFAULT_EXTENSION)
     parser.add_argument('--fps', help='Frames per second. (default=%d)' % DEFAULT_FPS)
+    parser.add_argument('--version', action='version', version=PYTHON_TIMELAPSE_VERSION)
 
     args = parser.parse_args()
 
