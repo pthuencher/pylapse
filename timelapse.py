@@ -6,7 +6,6 @@ import os
 
 # 3rd pary imports
 import cv2
-import numpy as np
 from colorama import init as colorama_init
 
 # local imports
