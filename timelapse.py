@@ -26,6 +26,7 @@ def setup():
     parser.add_argument('-o', '--output', metavar='FILENAME',help='Destination of the output video file.')
     parser.add_argument('-f', '--force-overwrite', action='store_true',help='Force overwrite existing files.')
     parser.add_argument('-v', '--verbose', action='store_true',help='Display verbose debug output.')
+    parser.add_argument('--no-colors', action='store_true',help='Force uncolored Output.')
     parser.add_argument('-p', '--preview', action='store_true',help='Preview (do not write any file).')
     parser.add_argument('-d', '--dimension', help='Dimension of the output video file. (default=1920x1080)')
     parser.add_argument('-c', '--fourcc', help='FOURCC code of the output video file. (default=%s)' % DEFAULT_FOURCC)
@@ -40,6 +41,9 @@ def setup():
 
     # Set verbosity status
     helpers.VERBOSE = args.verbose
+
+    # Set output color status
+    helpers.COLORS = not args.no_colors
     
     # Apply argument defauls
     args.dimension = parse_dimension(args.dimension)

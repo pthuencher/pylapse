@@ -9,10 +9,14 @@ from constants import DEFAULT_DIMENSION
 
 # Globals
 VERBOSE = False
+COLORS = True
 
 # Logging macros
 def ERROR(msg, shutdown=False):
-    print('[' + Fore.RED + 'ERROR' + Style.RESET_ALL + '] ' + str(msg))
+    if COLORS:
+        print('[' + Fore.RED + 'ERROR' + Style.RESET_ALL + '] ' + str(msg))
+    else:
+        print('[ERROR] ' + str(msg))
     if shutdown:
         sys.exit(1)
 
@@ -22,7 +26,10 @@ def DEBUG(msg):
 
 def INFO(msg, color=None, overwrite=False):
     end = '\r' if overwrite else '\n'
-    print('[' + Fore.YELLOW + 'timelapse' + Style.RESET_ALL + '] ' + str(msg), end=end)
+    if COLORS:
+        print('[' + Fore.YELLOW + 'timelapse' + Style.RESET_ALL + '] ' + str(msg), end=end)
+    else:
+        print('[timelapse] ' + str(msg), end=end)
 
 def parse_dimension(dim):
     if not dim:
