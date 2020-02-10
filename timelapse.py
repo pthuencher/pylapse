@@ -22,7 +22,7 @@ def setup():
     # Setup ArgumentParser
     parser = argparse.ArgumentParser(description='Create timelapse video from image sources.')
 
-    parser.add_argument('source', help='Path to the folder with source photos.')
+    parser.add_argument('source', help='Path to the folder with source images.')
     parser.add_argument('-o', '--output', metavar='FILENAME',help='Destination of the output video file.')
     parser.add_argument('-f', '--force-overwrite', action='store_true',help='Force overwrite existing files.')
     parser.add_argument('-v', '--verbose', action='store_true',help='Display verbose debug output.')

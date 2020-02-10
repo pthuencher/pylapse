@@ -49,8 +49,8 @@ def parse_crop(crop):
     if len(d) != 2:
         ERROR('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop, shutdown=True)
 
-    x = d[0].split('-')
-    y = d[1].split('-')
+    x = d[1].split('-')
+    y = d[0].split('-')
 
     if len(x) != 2 or len(y) != 2:
         ERROR('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop, shutdown=True)
