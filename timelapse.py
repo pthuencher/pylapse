@@ -26,12 +26,13 @@ def setup():
     parser.add_argument('-o', '--output', metavar='FILENAME',help='Destination of the output video file.')
     parser.add_argument('-f', '--force-overwrite', action='store_true',help='Force overwrite existing files.')
     parser.add_argument('-v', '--verbose', action='store_true',help='Display verbose debug output.')
-    parser.add_argument('--no-colors', action='store_true',help='Force uncolored Output.')
     parser.add_argument('-p', '--preview', action='store_true',help='Preview (do not write any file).')
-    parser.add_argument('-d', '--dimension', help='Dimension of the output video file. (default=1920x1080)')
-    parser.add_argument('-c', '--fourcc', help='FOURCC code of the output video file. (default=%s)' % DEFAULT_FOURCC)
+    parser.add_argument('-r', '--resize', help='Resize video images. (e.g. "1920x1080")')
+    parser.add_argument('-c', '--crop', help='Crop video images. (x1-x2:y1-y2) (e.g. "0-500:0-750"")')
     parser.add_argument('-e', '--ext', help='Extension of the output video file. (default=%s)' % DEFAULT_EXTENSION)
     parser.add_argument('--fps', help='Frames per second. (default=%d)' % DEFAULT_FPS)
+    parser.add_argument('--fourcc', help='FOURCC code of the output video file. (default=%s)' % DEFAULT_FOURCC)
+    parser.add_argument('--no-colors', action='store_true',help='Force uncolored Output.')
     parser.add_argument('--version', action='version', version=PYTHON_TIMELAPSE_VERSION)
 
     args = parser.parse_args()
@@ -44,9 +45,6 @@ def setup():
 
     # Set output color status
     helpers.COLORS = not args.no_colors
-    
-    # Apply argument defauls
-    args.dimension = parse_dimension(args.dimension)
 
     if not args.ext:
         args.ext = DEFAULT_EXTENSION
@@ -84,6 +82,10 @@ def setup():
             choice = input('File "%s" already exists. Overwrite? (y/N): ' % args.outputpath)
             if choice != 'y':
                 ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
+
+    # 4.) Validate parameters
+    args.resize = parse_resize(args.resize)
+    args.crop = parse_crop(args.crop)
 
     DEBUG('Setup completed.')
     return args
@@ -130,7 +132,7 @@ def do_render(args):
         ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
 
     INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
-    INFO('Crop images to %dx%d' % args.dimension)
+    if args.resize: INFO('Resize images to %dx%d' % args.resize)
 
     # Read preview image
     preview_path = files[int(len(files)/2)] # take from the middle
@@ -139,20 +141,40 @@ def do_render(args):
 
     # Create VideoWriter
     try:
-        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*args.fourcc), args.fps, (args.dimension[0], args.dimension[1]))
+        # determine target video image dimension
+        dim = None
+        if args.resize:
+            dim = args.resize
+        elif args.crop:
+            dx = (args.crop[0])[1] - (args.crop[0])[0]
+            dy = (args.crop[1])[1] - (args.crop[1])[0]
+            dim = (dx, dy)
+        else:
+            dim = (width, height)
+
+        # create VideoWriter
+        out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*args.fourcc), args.fps, (dim[0], dim[1]))
+
         INFO('Creating output file "%s" FOURCC=%s' % (args.output, args.fourcc))
+        if args.crop: INFO('Crop video images to %r %r' % args.crop)
+        INFO('Resize video images to %dx%d' % dim)
 
         # Iterate over each image and write to video
         for i, path in enumerate(files):
 
             # read image
             orig_img = cv2.imread(path)
+
+            # (optional) crop image
+            if args.crop:
+                x = args.crop[0]
+                y = args.crop[1]
+                orig_img = orig_img[x[0]:x[1], y[0]:y[1]]
+
             orig_width, orig_height, _ = orig_img.shape
 
-            # TODO: calculate resize factor to avoid image stetch
-
             # resize image
-            resize_img = cv2.resize(orig_img, (args.dimension[0], args.dimension[1]), interpolation = cv2.INTER_LINEAR)
+            resize_img = cv2.resize(orig_img, (dim[0], dim[1]), interpolation = cv2.INTER_LINEAR)
             resize_width, resize_height, _ = resize_img.shape
 
             # write image
@@ -169,12 +191,12 @@ def do_render(args):
         INFO('Output file: "%s"' % args.output)
 
     except KeyboardInterrupt:
-        print('\n') # avoid \r issues
+        print('\n\n') # avoid \r issues
         INFO('Aborted by user')
         return True
-    except BaseException as e:
-        print('\n\n')
-        return e
+    except Exception:
+        print('\n\n') # avoid \r issues
+        raise
     finally:
         out.release()
 
