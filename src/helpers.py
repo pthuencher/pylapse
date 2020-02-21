@@ -1,11 +1,13 @@
 # standard imports
+import glob
 import sys
+import os
 
 # 3rd pary imports
 from colorama import Fore, Back, Style
 
 # local imports
-from constants import DEFAULT_DIMENSION
+from src.constants import DEFAULT_DIMENSION
 
 # Globals
 VERBOSE = False
@@ -62,3 +64,12 @@ def parse_crop(crop):
 
 def create_progress_bar(perc):
     return '\x1b[1;32m#\x1b[1;0m'*perc + '-'*(100-perc)
+
+def get_source_files(d):
+    files = glob.glob(os.path.join(d, '*.{jpeg,jpg,JPG,png,PNG}'))
+    files_count = len(files)
+    if files_count < 1:
+        FATAL('No files found in "%s"' % d)
+
+    INFO('Found %d images in source directory "%s"' % (files_count, d))
+    return files
