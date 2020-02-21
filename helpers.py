@@ -12,6 +12,9 @@ VERBOSE = False
 COLORS = True
 
 # Logging macros
+def FATAL(msg):
+    ERROR(msg, shutdown=True)
+    
 def ERROR(msg, shutdown=False):
     if COLORS:
         print('[' + Fore.RED + 'ERROR' + Style.RESET_ALL + '] ' + str(msg))

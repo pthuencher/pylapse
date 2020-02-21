@@ -37,9 +37,6 @@ def setup():
 
     args = parser.parse_args()
 
-    # Determine basepath
-    args.basepath = os.getcwd()
-
     # Set verbosity status
     helpers.VERBOSE = args.verbose
 
@@ -59,22 +56,20 @@ def setup():
     
     # Type conversion
     args.fps = int(args.fps)
-    DEBUG(args)
+    DEBUG('Arguments: %r' % args)
 
     # Check preconditions    
     #  1.) Source folder existence
-    args.sourcepath = args.source if os.path.isabs(args.source) else os.path.join(args.basepath, args.source)
+    args.sourcepath = os.path.abspath(args.source)
+    DEBUG('Sourcepath: %s' % args.sourcepath)
     if not os.path.isdir(args.sourcepath):
         ERROR('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath, shutdown=True)
 
-    #  2.) Source folder content
-    if not os.listdir(args.sourcepath):
-        ERROR('Directory "%s" does not contain any image file.' % args.sourcepath, shutdown=True)
-
-    #  3.) Output file existence (if not preview)
+    #  2.) Output file existence (if not preview)
     if (args.preview): return args
 
-    args.outputpath = args.output if os.path.isabs(args.output) else os.path.join(args.basepath, args.output)
+    args.outputpath = os.path.abspath(args.output)
+    DEBUG('Outputpath: %s' % args.outputpath)
     if os.path.exists(args.outputpath):
         if args.force_overwrite:
             INFO('Overwriting existing file "%s"' % args.outputpath)
@@ -83,18 +78,28 @@ def setup():
             if choice != 'y':
                 ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
 
-    # 4.) Validate parameters
+    # 3.) Validate parameters
     args.resize = parse_resize(args.resize)
+    DEBUG('Resize: %dx%d' % args.resize)
     args.crop = parse_crop(args.crop)
+    DEBUG('Crop: %r %r' % args.crop)
 
     DEBUG('Setup completed.')
     return args
+
+def get_source_files(d):
+    files = glob.glob(os.path.join(d, '*.{jpeg,jpg,JPG,png,PNG}'))
+    if len(files) < 1:
+        FATAL('No files found in "%s"' % args.sourcepath)
+
+    INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
+    return files
 
 # Calculate preview image and show
 def do_preview(args):
     
     # Collect all images from source path
-    files = glob.glob(os.path.join(args.sourcepath, '*'))
+    files = glob.glob(os.path.join(args.sourcepath, '*.{jpg,png,gif}'))
     nfiles = len(files)
     if nfiles < 1:
         ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
@@ -126,12 +131,8 @@ def do_preview(args):
 def do_render(args):
 
     # Collect all images from source path
-    files = glob.glob(os.path.join(args.sourcepath, '*'))
-    nfiles = len(files)
-    if nfiles < 1:
-        ERROR('No files found in "%s"' % args.sourcepath, shutdown=True)
-
-    INFO('Found %d images in source directory "%s"' % (nfiles, args.sourcepath))
+    files = get_source_files(args.sourcepath)
+    INFO('Found %d images in source directory "%s"' % (len(files), args.sourcepath))
 
     # Read preview image
     preview_path = files[int(len(files)/2)] # take from the middle
@@ -193,9 +194,9 @@ def do_render(args):
         print('\n\n') # avoid \r issues
         INFO('Aborted by user')
         return True
-    except Exception:
+    except Exception as e:
         print('\n\n') # avoid \r issues
-        raise
+        raise e
     finally:
         out.release()
 
@@ -213,15 +214,10 @@ if __name__ == '__main__':
         action = do_render
 
     # call action
-    rc = action(args)
+    action(args)
 
-    # check return code
-    if isinstance(rc, BaseException):
-        ERROR('Exception occured')
-        raise rc
-    else:
-        INFO('Exit.')
-        sys.exit(0)
+    INFO('Exit.')
+    sys.exit(0)
 
     
 
