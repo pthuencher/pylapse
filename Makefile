@@ -16,9 +16,14 @@ all: $(SOURCES)
 	$(PYINSTALLER) $(SPECFILE)
 	@echo "Build complete."
 
+test:
+	$(PYTHON) -m unittest test\test_parser.py
+
 setup:
 	$(PIP) install -r requirments.txt
 
 clean:
 	rm -rf $(DISTPATH)
 	rm -rf $(WORKPATH)
+
+.PHONY: test setup
