@@ -15,6 +15,42 @@ from src.preview import do_preview
 from src.render import do_render
 
 
+class ImageSource:
+    directory = None
+    ext = None
+    paths = []
+
+
+    def __init__(self, path, ext=['*.JPG', '*.jpg', '*.jpeg']):
+        if not os.path.isdir(path):
+            FATAL('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath)
+
+        self.directory = path
+        self.ext = ext
+
+        self.__get_image_paths()
+
+    def __get_image_paths(self):
+        self.paths = []
+
+        for ext in self.ext:
+            self.paths.extend(glob.glob(os.path.join(self.directory,'') + ext))
+
+        self.size = len(self.paths)
+        if self.size < 1:
+            FATAL('No files found in "%s"' % self.directory)
+
+        INFO('Found %d images in source directory "%s"' % (self.size, self.directory))
+
+    def get_preview(self):
+        preview_path = self.paths[int(len(self.paths)/2)] # take from the middle
+        return cv2.imread(preview_path)
+
+    def image_generator(self):
+        for path in self.paths:
+            yield cv2.imread(path)
+
+
 
 # Setup routine
 def setup():
@@ -64,9 +100,15 @@ def setup():
     args.sourcepath = os.path.abspath(args.source)
     DEBUG('Sourcepath: %s' % args.sourcepath)
     if not os.path.isdir(args.sourcepath):
-        ERROR('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath, shutdown=True)
+        FATAL('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath)
 
-    #  2.) Output file existence (if not preview)
+    # 2.) Parse resize & crop parameters
+    args.resize = parse_resize(args.resize)
+    if args.resize: DEBUG('Resize: %dx%d' % args.resize)
+    args.crop = parse_crop(args.crop)
+    if args.crop: DEBUG('Crop: %r %r' % args.crop)
+
+    #  3.) Output file existence (if not preview)
     if (args.preview): return args
 
     args.outputpath = os.path.abspath(args.output)
@@ -77,20 +119,16 @@ def setup():
         else:
             choice = input('File "%s" already exists. Overwrite? (y/N): ' % args.outputpath)
             if choice != 'y':
-                ERROR('Aborted. Use -o to specify another output filename.', shutdown=True)
+                FATAL('Aborted. Use -o to specify another output filename.')
 
-    # 3.) Validate parameters
-    args.resize = parse_resize(args.resize)
-    DEBUG('Resize: %dx%d' % args.resize)
-    args.crop = parse_crop(args.crop)
-    DEBUG('Crop: %r %r' % args.crop)
-
-    DEBUG('Setup completed.')
     return args
 
 # Entry point
 if __name__ == '__main__':
     args = setup()
+    DEBUG('Setup completed.')
+
+    source = ImageSource(args.sourcepath)
 
     action = None
     if args.preview:
@@ -100,12 +138,12 @@ if __name__ == '__main__':
         action = do_render
 
     # call action
-    action(args)
+    DEBUG('Execute action: %s' % action.__name__)
+    action(source, args)
 
     INFO('Exit.')
     sys.exit(0)
 
-    
 
     
 

@@ -11,27 +11,22 @@ from src.helpers import *
 
 
 # Calculate preview image and show
-def do_preview(args):
-    sources = helpers.get_source_files(args.sourcepath)
-
+def do_preview(source, args):
     # Read preview image
-    preview_path = sources[int(len(sources)/2)] # take from the middle
-    preview_img = cv2.imread(preview_path)
-    height, width, _ = preview_img.shape
+    preview = source.get_preview()
 
-    INFO('Original dimension: %dx%d' % (width, height))
-
-    while height > 800 and width > 800:
-        height /=2; height = int(height)
-        width /= 2; width = int(width)
-
-    INFO('Preview dimension: %dx%d' % (width, height))
+    # crop image
+    if args.crop:
+        dx = args.crop[0]
+        dy = args.crop[1]
+        preview = preview[dx[0]:dx[1], dy[0]:dy[1]]
 
     # resize image
-    preview_img = cv2.resize(preview_img, (width, height), interpolation = cv2.INTER_LINEAR)
+    if args.resize:
+        preview = cv2.resize(preview, args.resize, interpolation = cv2.INTER_LINEAR)
 
     # display preview image
-    cv2.imshow('preview', preview_img)
+    cv2.imshow('preview', preview)
     cv2.waitKey(0)
 
     return True

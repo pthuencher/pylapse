@@ -7,7 +7,6 @@ import os
 from colorama import Fore, Back, Style
 
 # local imports
-from src.constants import DEFAULT_DIMENSION
 
 # Globals
 VERBOSE = False
@@ -42,7 +41,7 @@ def parse_resize(size):
 
     d = size.split('x')
     if len(d) != 2:
-        ERROR('Invalid resize value "%s". Use e.g. "720x480"' % size, shutdown=True)
+        FATAL('Invalid resize value "%s". Use e.g. "720x480"' % size)
 
     return (int(d[0]), int(d[1]))
 
@@ -52,24 +51,16 @@ def parse_crop(crop):
 
     d = crop.split(':')
     if len(d) != 2:
-        ERROR('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop, shutdown=True)
+        FATAL('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop)
 
     x = d[1].split('-')
     y = d[0].split('-')
 
     if len(x) != 2 or len(y) != 2:
-        ERROR('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop, shutdown=True)
+        FATAL('Invalid crop value "%s". Use "x1-x2:y1-y2"' % crop)
 
     return ((int(x[0]), int(x[1])), (int(y[0]), int(y[1])))
 
 def create_progress_bar(perc):
     return '\x1b[1;32m#\x1b[1;0m'*perc + '-'*(100-perc)
 
-def get_source_files(d):
-    files = glob.glob(os.path.join(d, '*.{jpeg,jpg,JPG,png,PNG}'))
-    files_count = len(files)
-    if files_count < 1:
-        FATAL('No files found in "%s"' % d)
-
-    INFO('Found %d images in source directory "%s"' % (files_count, d))
-    return files
