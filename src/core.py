@@ -89,7 +89,7 @@ def setup():
     return args
 
 # Entry point
-def run():
+if __name__ == '__main__':
     args = setup()
 
     action = None
