@@ -3,7 +3,7 @@
 block_cipher = None
 
 
-a = Analysis(['src\\core.py'],
+a = Analysis(['src\\pylapse.py'],
              pathex=['C:\\Users\\me\\Documents\\Workspace\\python_timelapse'],
              binaries=[],
              datas=[],
