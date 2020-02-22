@@ -3,7 +3,7 @@ DISTPATH = ./dist
 WORKPATH = ./build
 
 SOURCES = $(wildcard $(SOURCEDIR)/*.py)
-ENTRY_SCRIPT = $(SOURCEDIR)/core.py
+SPECFILE = pylapse.spec
 
 PYTHON = python
 PIP = pip
@@ -13,7 +13,7 @@ APPNAME = pylapse
 
 
 all: $(SOURCES)
-	$(PYINSTALLER) --onefile --name $(APPNAME) $(ENTRY_SCRIPT)
+	$(PYINSTALLER) $(SPECFILE)
 	@echo "Build complete."
 
 setup:
