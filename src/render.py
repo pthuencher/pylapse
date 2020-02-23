@@ -60,12 +60,15 @@ def do_render(source, args):
 
     except KeyboardInterrupt:
         print('\n\n') # avoid \r issues
-        INFO('Aborted by user')
+        out.release()
+        choice = input('Aborted by user. Keep outfile "%s"? (y/N): ' % args.output)
+        if choice != 'y':
+            os.remove(args.output)
         return True
     except Exception as e:
         print('\n\n') # avoid \r issues
-        raise e
-    finally:
         out.release()
+        raise e
 
+    out.release()
     return True

@@ -26,7 +26,8 @@ def do_preview(source, args):
         preview = cv2.resize(preview, args.resize, interpolation = cv2.INTER_LINEAR)
 
     # display preview image
-    cv2.imshow('preview', preview)
+    cv2.imshow('pylapse - %s' % source.directory, preview)
     cv2.waitKey(0)
 
     return True
+
