@@ -11,8 +11,7 @@ from colorama import init as colorama_init
 from src.constants import *
 import src.helpers as helpers
 from src.helpers import *
-from src.preview import do_preview
-from src.render import do_render
+from src.actions import *
 
 
 class ImageSource:
