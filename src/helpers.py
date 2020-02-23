@@ -91,3 +91,14 @@ def parse_crop(crop):
 def create_progress_bar(perc):
     return '\x1b[1;32m#\x1b[1;0m'*perc + '-'*(100-perc)
 
+
+def limit_string(string, length):
+    if len(string) <= length:
+        return string
+
+    half = int(length/2)
+    begin = string[:half-1]
+    end = string[(len(string)-half+1):]
+
+    return begin + ".." + end
+
