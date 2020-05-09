@@ -22,7 +22,7 @@ class ImageSource:
 
     def __init__(self, path, ext=['*.JPG', '*.jpg', '*.jpeg']):
         if not os.path.isdir(path):
-            FATAL('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % args.sourcepath)
+            FATAL('Path "%s" is not a directory. Please point to a valid directory that contains the source files.' % path)
 
         self.directory = path
         self.ext = ext
@@ -37,13 +37,15 @@ class ImageSource:
 
         self.size = len(self.paths)
         if self.size < 1:
-            FATAL('No files found in "%s"' % self.directory)
+            WARN('No files found in "%s"' % self.directory)
 
         INFO('Found %d images in source directory "%s"' % (self.size, self.directory))
 
     def get_preview(self):
-        preview_path = self.paths[int(len(self.paths)/2)] # take from the middle
-        return cv2.imread(preview_path)
+        return cv2.imread(self.get_preview_path())
+
+    def get_preview_path(self):
+        return self.paths[int(len(self.paths)/2)] # take from the middle
 
     def image_generator(self):
         for path in self.paths:

@@ -1,8 +1,8 @@
-SOURCEDIR = ./src
-DISTPATH = ./dist
-WORKPATH = ./build
+SOURCE_DIR = ./src
+DIST_DIR = ./dist
+WORK_DIR = ./build
 
-SOURCES = $(wildcard $(SOURCEDIR)/*.py)
+SOURCES = $(wildcard $(SOURCE_DIR)/*.py)
 SPECFILE = pylapse.spec
 
 PYTHON = python
@@ -23,7 +23,7 @@ setup:
 	$(PIP) install -r requirments.txt
 
 clean:
-	rm -rf $(DISTPATH)
-	rm -rf $(WORKPATH)
+	rm -rf $(DIST_DIR)
+	rm -rf $(WORK_DIR)
 
 .PHONY: test setup
