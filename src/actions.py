@@ -54,22 +54,23 @@ def do_preview(source, args):
 def do_render(source, args):
     gen = source.image_generator()
 
-    # Create VideoWriter
-    try:
-        # determine target video image size
-        target_size = None
-        if args.resize:
-            target_size = args.resize
-        elif args.crop:
-            dx = (args.crop[0])[1] - (args.crop[0])[0]
-            dy = (args.crop[1])[1] - (args.crop[1])[0]
-            target_size = (dx, dy)
-        else:
-            preview = source.get_preview()
-            width, height, _ = preview.shape
-            target_size = (width, height)
+    # determine target video image size
+    target_size = None
+    if args.resize:
+        target_size = args.resize
+    elif args.crop:
+        dx = (args.crop[0])[1] - (args.crop[0])[0]
+        dy = (args.crop[1])[1] - (args.crop[1])[0]
+        target_size = (dx, dy)
+    else:
+        preview = source.get_preview()
+        height, width, _ = preview.shape
+        target_size = (width, height)
 
-        # create VideoWriter
+    DEBUG("Target video size will be %dx%d" % target_size)
+
+    try:
+         # create VideoWriter
         out = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*args.fourcc), args.fps, target_size)
 
         # Iterate over each image and write to video
