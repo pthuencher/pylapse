@@ -1,5 +1,5 @@
 # standard imports
-import argparse
+from argparse import ArgumentParser, RawTextHelpFormatter
 import sys
 import os
 
@@ -58,67 +58,74 @@ def INFO(msg, overwrite=False):
 # Argument parsing
 def parse_args():
 
-    # Setup ArgumentParser
-    parser = argparse.ArgumentParser(description='Create timelapse video from image frames.')
+    # setup ArgumentParser
+    parser = ArgumentParser(
+        description='Create timelapse video from image frames.', 
+        formatter_class=RawTextHelpFormatter)
+
+    # add argument groups
+    output_group = parser.add_argument_group('output')
+    settings_group = parser.add_argument_group('settings')
+    transform_group = parser.add_argument_group('transform')
 
     parser.add_argument(
         'source', 
-        help='path to the folder with source images.')
+        help='load image frames from source')
 
-    parser.add_argument(
+    output_group.add_argument(
         '-o', '--output',
         default=DEFAULT_OUTPUT_FILENAME,
-        metavar='FILENAME',
-        help='destination of the output video file.')
+        metavar='FILE',
+        help='render video to FILE')
 
     parser.add_argument(
         '-f', '--force-overwrite', 
         action='store_true',
-        help='force overwrite existing files.')
+        help='force overwrite existing files')
 
     parser.add_argument(
-        '-v', '--verbose', 
+        '--debug',
+        dest="verbose",
         action='store_true',
-        help='display verbose debug output.')
+        help='display verbose debug output')
 
-    parser.add_argument(
-        '-p', '--preview', 
+    output_group.add_argument(
+        '--preview', 
         action='store_true',
-        help='preview (do not write any file).')
+        help='preview (do not write any file)')
 
-    parser.add_argument(
-        '-r', '--resize', 
-        help='resize images. (e.g. "1920x1080")')
+    transform_group.add_argument(
+        '--resize',
+        help='resize images (example: 1920x1080)\n\n    3840x2160 (16:9) 4K\n    1920x1080 (16:9) Full HD\n    1280x720  (16:9)\n    2880x2160 (4:3)\n    1440x1080 (4:3)\n    640x480   (4:3)\n\n ')
 
-    parser.add_argument(
-        '-c', '--crop', 
-        help='crop images. (x1-x2:y1-y2) (e.g. "0-1920:0-1080"")')
+    transform_group.add_argument(
+        '--crop', 
+        help='crop images (example: 0-1920:0-1080)')
 
-    parser.add_argument(
-        '-e', '--ext',
+    settings_group.add_argument(
+        '--ext',
         default=DEFAULT_EXTENSION,
-        help='extension of the output video file. (default: %(default)s)')
+        help='extension of the final video file. (default: %(default)s)')
 
-    parser.add_argument(
+    settings_group.add_argument(
         '--fps',
         default=30,
-        choices=["24","25","30","60","120","240","300"],
-        help='frames per second. (default: %(default)s)')
+        help='frames per second (default: %(default)s)')
 
-    parser.add_argument(
+    settings_group.add_argument(
         '--fourcc', 
         default=DEFAULT_FOURCC,
-        help='FOURCC code of the output video file. (default: %(default)s)')
+        help='FOURCC code of the final video file (default: %(default)s)')
 
     parser.add_argument(
         '--no-colors', 
         action='store_true', 
-        help='force uncolored Output.')
+        help='force uncolored output')
 
     parser.add_argument(
-        '--version', 
+        '-v', '--version', 
         action='version', 
-        version=VSN)
+        version="pylapse - " + VSN)
 
     args = parser.parse_args()
 

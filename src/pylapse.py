@@ -59,15 +59,16 @@ class PylapseEngine:
         # Apply transformation
         preview = self.__transform(preview)
 
+
         # add data
         BLACK = (0,0,0)
         WHITE = (255,255,255)
         cv2.rectangle(preview,(300,120),(10,10),BLACK,-1)
         cv2.putText(preview, 'Images: %d' % self.image_count, (20,30), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
-        cv2.putText(preview, 'Crop: %r' % [args.crop], (20,50), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
-        cv2.putText(preview, 'FPS: %d' % int(args.fps), (20,70), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
-        cv2.putText(preview, 'Duration: %d sec(s)' % (self.image_count/int(args.fps)), (20,90), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
-        cv2.putText(preview, 'Resolution: %r' % [args.resize], (20,110), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
+        cv2.putText(preview, 'FPS: %d' % int(self.args.fps), (20,50), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
+        cv2.putText(preview, 'Duration: %d sec(s)' % (self.image_count/int(self.args.fps)), (20,70), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
+        cv2.putText(preview, 'Crop: %r' % [self.args.crop], (20,90), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
+        cv2.putText(preview, 'Resize: %r' % [self.args.resize], (20,110), cv2.FONT_HERSHEY_SIMPLEX, 0.4, WHITE, 1, cv2.LINE_AA)
 
         # display preview image
         cv2.imshow('pylapse - %s' % self.args.sourcepath, preview)
