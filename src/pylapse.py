@@ -23,6 +23,17 @@ class PylapseEngine:
         self.image_paths = self.__collect_image_paths()
         self.image_count = len(self.image_paths)
 
+
+    def execute(self):
+        if args.preview:
+            DEBUG('Execute action: preview')
+            self.__do_preview()
+        else:
+            DEBUG('Execute action: render')
+            # default action
+            self.__do_render()
+
+
     def __collect_image_paths(self):
         paths = []
 
@@ -52,8 +63,7 @@ class PylapseEngine:
         return img
 
 
-
-    def preview(self):
+    def __do_preview(self):
         # Read preview image
         preview = self.__get_preview_image()
         # Apply transformation
@@ -76,7 +86,7 @@ class PylapseEngine:
 
         return True
     
-    def render(self):
+    def __do_render(self):
         gen = self.__image_generator()
 
         # determine target video image size
@@ -114,6 +124,7 @@ class PylapseEngine:
                 img_data['progress_bar'] = helpers.print_progress_bar(int(img_data['percentage']))
                 INFO('[ \x1b[1;32m{percentage}%\x1b[1;0m ] | [ {progress_bar} ] | [ {index} of {total} ]'.format(**img_data), overwrite=True)
             
+            INFO('')
             INFO('Output file: "%s"' % args.output)
 
         except KeyboardInterrupt:
@@ -139,16 +150,23 @@ if __name__ == '__main__':
 
     colorama_init()
 
+    print(
+        f"""
+                     _                      
+         _ __  _   _| | __ _ _ __  ___  ___ 
+        | '_ \| | | | |/ _` | '_ \/ __|/ _ \\
+        | |_) | |_| | | (_| | |_) \__ \  __/
+        | .__/ \__, |_|\__,_| .__/|___/\___|
+        |_|    |___/        |_|             
+
+        {helpers.VSN}
+
+        """
+    )
+
     args = helpers.parse_args()
     pylapse = PylapseEngine(args)
-
-    if args.preview:
-        DEBUG('Execute action: preview')
-        pylapse.preview()
-    else:
-        DEBUG('Execute action: render')
-        # default action
-        pylapse.render()
+    pylapse.execute()
 
     INFO('Exit.')
     sys.exit(0)

@@ -15,7 +15,7 @@ VERBOSE = False
 COLORS = True
 
 # Version
-VSN = '2020.05.09'
+VSN = '2020.11.27'
 
 # Defaults
 DEFAULT_FPS = 24

@@ -1,4 +1,4 @@
-Create timelapse video from a given image sequence using opencv.
+Create a timelapse video from image frames.
 
 ## Usage
 ```
