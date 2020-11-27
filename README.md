@@ -41,5 +41,13 @@ transform:
   --crop CROP           crop images (example: 0-1920:0-1080)
 ```
 
+## TODO
+* fix video creation and become independent from opencv
+* embed metadata into final video
+* display advanced status information (cpu, eta, etc..)
+* implement convinient full-hd preset
+
+
+
 ## Build
 Run `make all` to build a standalone executable in `dist/`.
