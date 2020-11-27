@@ -1,0 +1,10 @@
+# python specific
+__pycache__/
+*.pyc
+
+# project specific
+build/
+dist/
+*.avi
+*.mp4
+*.mkv
